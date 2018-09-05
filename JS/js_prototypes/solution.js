@@ -1,27 +1,48 @@
-//Реализуйте и экспортируйте по умолчанию функцию buildHtml, которая возвращает строковое представление html.
+//Текущая версия htmlBuilder должна уметь работать с одиночными тегами. 
+//Список тегов, которые являются одиночными, находится в singleTagsList.
+//Функция render принимает на вход ast и возвращает строковое представление.
+//Функция parse принимает на вход исходную структуру и возвращает представление в виде ast.
 
 // BEGIN
+export const render = (data) => {
+  const {
+    name,
+    attributes,
+    body,
+    children,
+  } = data;
+  const attrsLine = Object.keys(attributes)
+    .map(key => ` ${key}="${attributes[key]}"`).join('');
+  const content = children.length > 0 ? children.map(render).join('') : body;
+
+  if (singleTagsList.has(name)) {
+    return `<${name}${attrsLine}>`;
+  }
+
+  return `<${name}${attrsLine}>${content}</${name}>`;
+};
+
 const propertyActions = [
   {
     name: 'body',
     check: arg => typeof arg === 'string',
+    process: identity,
   },
   {
     name: 'children',
     check: arg => arg instanceof Array,
+    process: (children, f) => children.map(f),
   },
   {
     name: 'attributes',
     check: arg => arg instanceof Object,
+    process: identity,
   },
 ];
 
 const getPropertyAction = arg => propertyActions.find(({ check }) => check(arg));
 
-const buildAttrString = attrs =>
-  Object.keys(attrs).map(key => ` ${key}="${attrs[key]}"`).join('');
-
-const buildHtml = (data) => {
+export const parse = (data) => {
   const [first, ...rest] = data;
   const root = {
     name: first,
@@ -29,17 +50,9 @@ const buildHtml = (data) => {
     body: '',
     children: [],
   };
-  const tag = rest
-    .reduce((acc, arg) => {
-      const { name } = getPropertyAction(arg);
-      return { ...acc, [name]: arg };
-    }, root);
-
-  return [`<${tag.name}${buildAttrString(tag.attributes)}>`,
-    `${tag.body}${tag.children.map(buildHtml).join('')}`,
-    `</${tag.name}>`,
-  ].join('');
+  return rest.reduce((acc, arg) => {
+    const { name, process } = getPropertyAction(arg);
+    return { ...acc, [name]: process(arg, parse) };
+  }, root);
 };
-
-export default buildHtml;
 // END
