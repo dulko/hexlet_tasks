@@ -1,26 +1,5 @@
-//Текущая версия htmlBuilder должна уметь работать с одиночными тегами. 
-//Список тегов, которые являются одиночными, находится в singleTagsList.
-//Функция render принимает на вход ast и возвращает строковое представление.
-//Функция parse принимает на вход исходную структуру и возвращает представление в виде ast.
-
-// BEGIN
-export const render = (data) => {
-  const {
-    name,
-    attributes,
-    body,
-    children,
-  } = data;
-  const attrsLine = Object.keys(attributes)
-    .map(key => ` ${key}="${attributes[key]}"`).join('');
-  const content = children.length > 0 ? children.map(render).join('') : body;
-
-  if (singleTagsList.has(name)) {
-    return `<${name}${attrsLine}>`;
-  }
-
-  return `<${name}${attrsLine}>${content}</${name}>`;
-};
+import { identity } from 'lodash';
+import buildNode from './buildNode';
 
 const propertyActions = [
   {
@@ -42,7 +21,7 @@ const propertyActions = [
 
 const getPropertyAction = arg => propertyActions.find(({ check }) => check(arg));
 
-export const parse = (data) => {
+const parse = (data) => {
   const [first, ...rest] = data;
   const root = {
     name: first,
@@ -50,9 +29,11 @@ export const parse = (data) => {
     body: '',
     children: [],
   };
-  return rest.reduce((acc, arg) => {
+  const args = rest.reduce((acc, arg) => {
     const { name, process } = getPropertyAction(arg);
     return { ...acc, [name]: process(arg, parse) };
   }, root);
+  return buildNode(args.name, args.attributes, args.body, args.children);
 };
-// END
+
+export default parse;
