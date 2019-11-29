@@ -6,3 +6,4 @@
 //test test
 =======
 //to card without detailed view
+sssss
