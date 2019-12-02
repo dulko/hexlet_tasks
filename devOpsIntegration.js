@@ -7,3 +7,4 @@
 =======
 //to card without detailed view
 sssss
+ыыыыыы
