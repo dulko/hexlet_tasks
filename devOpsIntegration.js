@@ -8,3 +8,4 @@
 //to card without detailed view
 sssss
 dddddd
+xxxxxx
